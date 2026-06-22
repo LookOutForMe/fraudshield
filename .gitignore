@@ -1,0 +1,7 @@
+.env
+certs/
+data/raw/*.csv
+__pycache__/
+*.pyc
+.streamlit/secrets.toml
+models/fraud_model.pkl

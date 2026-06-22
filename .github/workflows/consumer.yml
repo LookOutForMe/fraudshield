@@ -1,0 +1,42 @@
+name: Fraud Detection Consumer
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'   # every 10 minutes
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write Kafka certificates
+        run: |
+          mkdir -p certs
+          echo "${{ secrets.KAFKA_CA_CERT }}" > certs/ca.pem
+          echo "${{ secrets.KAFKA_SERVICE_CERT }}" > certs/service.cert
+          echo "${{ secrets.KAFKA_SERVICE_KEY }}" > certs/service.key
+          chmod 600 certs/*
+
+      - name: Write ML model
+        run: |
+          mkdir -p models
+          echo "${{ secrets.MODEL_BASE64 }}" | base64 -d > models/fraud_model.pkl
+
+      - name: Run consumer
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          MAX_MESSAGES: '200'   # process at most 200 messages per run
+        run: python spark_consumer.py

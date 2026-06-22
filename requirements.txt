@@ -1,0 +1,11 @@
+kafka-python
+pandas
+numpy
+joblib
+supabase
+python-dotenv
+tqdm
+plotly>=5.0.0
+streamlit>=1.25.0
+gdown
+requests

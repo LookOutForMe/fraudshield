@@ -1,0 +1,39 @@
+name: Kafka Producer
+
+on:
+  workflow_dispatch:   # manual trigger
+  # schedule:          # uncomment to run automatically
+  #   - cron: '*/30 * * * *'
+
+jobs:
+  produce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write Kafka certificates
+        run: |
+          mkdir -p certs
+          echo "${{ secrets.KAFKA_CA_CERT }}" > certs/ca.pem
+          echo "${{ secrets.KAFKA_SERVICE_CERT }}" > certs/service.cert
+          echo "${{ secrets.KAFKA_SERVICE_KEY }}" > certs/service.key
+          chmod 600 certs/*
+
+      - name: Run producer
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          MAX_MESSAGES: ${{ vars.MAX_MESSAGES || '5000' }}
+          DELAY: ${{ vars.DELAY || '0.1' }}
+          GDRIVE_FILE_ID: ${{ vars.GDRIVE_FILE_ID }}
+        run: python kafka_producer.py
