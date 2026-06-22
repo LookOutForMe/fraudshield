@@ -2,7 +2,7 @@ name: Kafka Producer
 
 on:
   workflow_dispatch:   # manual trigger
-  # schedule:          # uncomment to run automatically
+  # schedule:
   #   - cron: '*/30 * * * *'
 
 jobs:
@@ -21,21 +21,24 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Write Kafka certificates (exact copy)
+      - name: Decode Kafka certificates from base64
         run: |
           mkdir -p certs
-          cat <<'CERTEOF' > certs/ca.pem
-          ${{ secrets.KAFKA_CA_CERT }}
-          CERTEOF
-          cat <<'CERTEOF' > certs/service.cert
-          ${{ secrets.KAFKA_SERVICE_CERT }}
-          CERTEOF
-          cat <<'CERTEOF' > certs/service.key
-          ${{ secrets.KAFKA_SERVICE_KEY }}
-          CERTEOF
+          echo "${{ secrets.KAFKA_CA_CERT_BASE64 }}" | base64 -d > certs/ca.pem
+          echo "${{ secrets.KAFKA_SERVICE_CERT_BASE64 }}" | base64 -d > certs/service.cert
+          echo "${{ secrets.KAFKA_SERVICE_KEY_BASE64 }}" | base64 -d > certs/service.key
           chmod 600 certs/*
+          echo "--- Certificate sizes ---"
+          wc -c certs/*
+          echo "--- First line of ca.pem ---"
+          head -1 certs/ca.pem
 
-      - name: Test Kafka SSL connectivity
+      - name: Test network reachability to Kafka
+        run: |
+          echo "Testing TCP connection (10s timeout)"
+          timeout 10 bash -c 'echo >/dev/tcp/farud-detection-ariyanshaw143-b9ee.k.aivencloud.com/17043 && echo "Port is OPEN" || echo "Port is CLOSED"' || echo "Connection timed out or blocked"
+
+      - name: Test Kafka SSL handshake
         run: |
           openssl s_client -connect farud-detection-ariyanshaw143-b9ee.k.aivencloud.com:17043 \
             -CAfile certs/ca.pem -cert certs/service.cert -key certs/service.key \
