@@ -21,13 +21,25 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Write Kafka certificates
+      - name: Write Kafka certificates (exact copy)
         run: |
           mkdir -p certs
-          echo "${{ secrets.KAFKA_CA_CERT }}" > certs/ca.pem
-          echo "${{ secrets.KAFKA_SERVICE_CERT }}" > certs/service.cert
-          echo "${{ secrets.KAFKA_SERVICE_KEY }}" > certs/service.key
+          cat <<'CERTEOF' > certs/ca.pem
+          ${{ secrets.KAFKA_CA_CERT }}
+          CERTEOF
+          cat <<'CERTEOF' > certs/service.cert
+          ${{ secrets.KAFKA_SERVICE_CERT }}
+          CERTEOF
+          cat <<'CERTEOF' > certs/service.key
+          ${{ secrets.KAFKA_SERVICE_KEY }}
+          CERTEOF
           chmod 600 certs/*
+
+      - name: Test Kafka SSL connectivity
+        run: |
+          openssl s_client -connect farud-detection-ariyanshaw143-b9ee.k.aivencloud.com:17043 \
+            -CAfile certs/ca.pem -cert certs/service.cert -key certs/service.key \
+            -state -nbio 2>&1 | head -30
 
       - name: Run producer
         env:
