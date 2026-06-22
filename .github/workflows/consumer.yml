@@ -3,7 +3,7 @@ name: Fraud Detection Consumer
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/10 * * * *'   # every 10 minutes
+    - cron: '* * * * *'
 
 jobs:
   detect:
