@@ -3,7 +3,7 @@ name: Fraud Detection Consumer
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/5 * * * *'   # every 10 minutes
+    - cron: '*/10 * * * *'   # every 10 minutes
 
 jobs:
   detect:
@@ -29,10 +29,39 @@ jobs:
           echo "${{ secrets.KAFKA_SERVICE_KEY }}" > certs/service.key
           chmod 600 certs/*
 
-      - name: Write ML model
+      - name: Download ML model from Google Drive
+        env:
+          MODEL_GDRIVE_ID: ${{ vars.MODEL_GDRIVE_ID }}
         run: |
-          mkdir -p models
-          echo "${{ secrets.MODEL_BASE64 }}" | base64 -d > models/fraud_model.pkl
+          python -c "
+          import requests, re, os, sys
+          from tqdm import tqdm
+
+          file_id = os.environ['MODEL_GDRIVE_ID']
+          base_url = 'https://drive.google.com/uc?export=download'
+          session = requests.Session()
+          response = session.get(base_url, params={'id': file_id}, stream=True)
+
+          # Handle large file confirmation token
+          confirmation_token = None
+          if 'text/html' in response.headers.get('Content-Type', ''):
+              match = re.search(r'confirm=([0-9A-Za-z_\-]+)', response.text)
+              if match:
+                  confirmation_token = match.group(1)
+
+          if confirmation_token:
+              response = session.get(base_url, params={'id': file_id, 'confirm': confirmation_token}, stream=True)
+
+          total_size = int(response.headers.get('content-length', 0))
+          os.makedirs('models', exist_ok=True)
+          with open('models/fraud_model.pkl', 'wb') as f:
+              with tqdm(total=total_size, unit='B', unit_scale=True, desc='Downloading model') as pbar:
+                  for chunk in response.iter_content(8192):
+                      if chunk:
+                          f.write(chunk)
+                          pbar.update(len(chunk))
+          print(f'Model downloaded ({os.path.getsize(\"models/fraud_model.pkl\")/1024/1024:.1f} MB)')
+          "
 
       - name: Run consumer
         env:
