@@ -21,13 +21,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Write Kafka certificates
+      - name: Decode Kafka certificates from base64
         run: |
           mkdir -p certs
-          echo "${{ secrets.KAFKA_CA_CERT }}" > certs/ca.pem
-          echo "${{ secrets.KAFKA_SERVICE_CERT }}" > certs/service.cert
-          echo "${{ secrets.KAFKA_SERVICE_KEY }}" > certs/service.key
+          echo "${{ secrets.KAFKA_CA_CERT_BASE64 }}" | base64 -d > certs/ca.pem
+          echo "${{ secrets.KAFKA_SERVICE_CERT_BASE64 }}" | base64 -d > certs/service.cert
+          echo "${{ secrets.KAFKA_SERVICE_KEY_BASE64 }}" | base64 -d > certs/service.key
           chmod 600 certs/*
+          echo "Certificate sizes:"
+          wc -c certs/*
 
       - name: Download ML model from Google Drive
         env:
@@ -67,5 +69,5 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          MAX_MESSAGES: '200'   # process at most 200 messages per run
+          MAX_MESSAGES: '200'
         run: python spark_consumer.py
