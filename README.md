@@ -30,6 +30,11 @@ The system is built around three pillars:
 
 ## 🏗️ Architecture
 
+![FraudShield Architecture](https://github.com/user-attachments/assets/55fc149c-941c-4cf9-b13d-6b1932742a5e)
+
+<details>
+<summary>Text diagram (fallback)</summary>
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        GITHUB ACTIONS CI/CD                         │
@@ -69,9 +74,10 @@ The system is built around three pillars:
                     │   Streamlit Dashboard (app.py)   │
                     │   FraudShield Operations Console │
                     └──────────────────────────────────┘
-
-<img width="2864" height="3280" alt="fraudshield_architecture_diagram" src="https://github.com/user-attachments/assets/55fc149c-941c-4cf9-b13d-6b1932742a5e" />
 ```
+
+</details>
+
 ---
 
 ## ⚙️ Tech Stack
