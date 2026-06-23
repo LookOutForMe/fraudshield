@@ -70,7 +70,7 @@ The system is built around three pillars:
                     │   FraudShield Operations Console │
                     └──────────────────────────────────┘
 ```
-
+![Uploading fraudshield_architecture_diagram.png…]()
 ---
 
 ## ⚙️ Tech Stack
