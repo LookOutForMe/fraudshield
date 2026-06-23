@@ -3,7 +3,7 @@ name: Fraud Detection Consumer
 on:
   workflow_dispatch:
   schedule:
-    - cron: '* * * * *'
+    - cron: '*/8 * * * *'
 
 jobs:
   detect:
